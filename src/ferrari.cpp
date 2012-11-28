@@ -19,6 +19,12 @@
 #include <sstream>
 #include <vector>
 //--------------------------------------------------------------------------------------------------
+void print_usage() {
+  std::cout << "Ferrari Reachability Index" << std::endl;
+  std::cout << "Usage: ferrari -g <GRAPHFILE> -q <QUERYFILE> -k <SIZE> [-s <SEEDS> ] [-L]" 
+            << std::endl;
+}
+//--------------------------------------------------------------------------------------------------
 void read_queries(const std::string& query_file,
     std::vector<std::pair<unsigned, unsigned> > *queries) {
   std::ifstream qf(query_file.c_str(), std::ios::in);
@@ -40,7 +46,7 @@ void read_queries(const std::string& query_file,
 }
 //--------------------------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
-  std::string graph_file, query_file;
+  std::string graph_file = "", query_file = "";
   unsigned seeds = 0, k = ~0u; 
   bool global = true;
   for (int i = 0; i < argc; ++i) {
@@ -59,6 +65,11 @@ int main(int argc, char *argv[]) {
       global = true;
     }
   }
+
+  if (graph_file == "" || query_file == "" || k==~0u) {
+    print_usage();
+    return 1;
+  }  
 
   std::cout << "graph file: " << graph_file << std::endl;
   std::cout << "query file: " << query_file << std::endl;
