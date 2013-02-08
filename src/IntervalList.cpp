@@ -352,13 +352,19 @@ void IntervalList::restrict(const unsigned& k) {
     ++selected_gaps;
     selected[id] = 1;
 
+    /* Schema of indices of intervals and gaps:
+     * list of N intervals:
+     * [  I0  ]  g0  [  I1  ]  g1  [  I2  ]  g2  ... gN-2  [  IN-1  ]
+     */
     if (id && selected[id - 1] == 0) {
       gaps.push_back(
           std::make_pair(id - 1,
               gap_length(id - 1) + interval_length(id)
-                  + selected[id - 1] * interval_length(id - 1)));
+                         + (id >= 2 ? selected[id - 2] * interval_length(id - 1)
+                            : interval_length(id - 1))));
       std::push_heap(gaps.begin(), gaps.end());
     }
+    
     if (id < lower_.size() - 2 && selected[id + 1] == 0) {
       gaps.push_back(
           std::make_pair(id + 1,
