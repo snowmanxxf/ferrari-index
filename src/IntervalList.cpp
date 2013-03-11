@@ -323,6 +323,13 @@ void IntervalList::restrict(const unsigned& k) {
   if (lower_.size() <= k)
     return;
 
+  /* Collection of all gaps between intervals
+   *  - first component: id of the gap (first gap has id 0)
+   *  - second component: length of the gap
+   * For first and last interval the length corresponds to the gap
+   * length plus the adjacent interval if its exact, otherwise just
+   * the gap length.
+   */
   std::vector<std::pair<unsigned, unsigned> > gaps;
   for (unsigned i = 0; i < lower_.size() - 1; ++i) {
     if (i == 0 && exact_.front()) {
@@ -333,30 +340,42 @@ void IntervalList::restrict(const unsigned& k) {
       gaps.push_back(std::make_pair(i, gap_length(i)));
     }
   }
+
+  // gaps will be organized in a heap, with the largest element on top
   std::make_heap(gaps.begin(), gaps.end(),
       second_smaller<std::pair<unsigned, unsigned> >());
+
+  // indicator for gap selection, 1 if gaps is selected for preservation
   std::vector<char> selected(lower_.size() - 1, 0);
 
   unsigned id, selected_gaps = 0;
-  while (!gaps.empty() && selected_gaps < k - 1) {
 
+  // keep selecting gaps until gaps remain and less than k-1 gaps have been selected so far
+  while (!gaps.empty() && selected_gaps < k - 1) {
     id = gaps.front().first;
+
+    // take first gap from the heap (largest)
     std::pop_heap(gaps.begin(), gaps.end(),
         second_smaller<std::pair<unsigned, unsigned> >());
     gaps.pop_back();
 
+    // gap was already selected
     if (selected[id]) {
       continue;
     }
 
+    // select this gap for preservation
     ++selected_gaps;
     selected[id] = 1;
 
+
+    /* since gap has been selected, value of adjacent gaps has to be updated */
     /* Schema of indices of intervals and gaps:
      * list of N intervals:
      * [  I0  ]  g0  [  I1  ]  g1  [  I2  ]  g2  ... gN-2  [  IN-1  ]
      */
     if (id && selected[id - 1] == 0) {
+      // update gap to the left
       gaps.push_back(
           std::make_pair(id - 1,
               gap_length(id - 1) + interval_length(id)
@@ -366,6 +385,7 @@ void IntervalList::restrict(const unsigned& k) {
     }
     
     if (id < lower_.size() - 2 && selected[id + 1] == 0) {
+      // update gap to the right
       gaps.push_back(
           std::make_pair(id + 1,
               gap_length(id + 1) + interval_length(id + 1)
@@ -375,10 +395,17 @@ void IntervalList::restrict(const unsigned& k) {
     }
   }
 
+  // new intervals in the restricted interval set
   std::vector<unsigned> n_lower, n_upper;
+
+  // exactness indicator for new intervals
   std::vector<char> n_exact;
   n_lower.push_back(lower_.front());
+
   bool prev_gap_selected = true;
+
+  /* construct new interval set by merging intervals if their common gap
+   * has not been selected */
   for (unsigned i = 0; i < lower_.size() - 1; ++i) {
     if (selected[i]) {
       n_upper.push_back(upper_[i]);
