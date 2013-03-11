@@ -14,18 +14,31 @@
 #include <assert.h>
 #include <cstdio>
 //-------------------------------------------------------------------------------------------------
+//! Constructor.
 IntervalList::IntervalList() {
 }
 //-------------------------------------------------------------------------------------------------
+//! Constructor.
+/*!
+ * Construct a new interval list
+ * \param a begin of first interval
+ * \param b end of first interval
+ * \param ex exactness indicator for interval (0 approximate, 1 exact)
+ */
 IntervalList::IntervalList(unsigned a, unsigned b, char ex) {
   lower_.push_back(a);
   upper_.push_back(b);
   exact_.push_back(ex);
 }
 //-------------------------------------------------------------------------------------------------
+//! Destructor.
 IntervalList::~IntervalList() {
 }
 //-------------------------------------------------------------------------------------------------
+//! Merge two interval lists containing only exact intervals
+/*!
+ * \param other interval list to merge into this interval list
+ */
 void IntervalList::merge_exact(const IntervalList& other) {
   // find starting point
   if (other.empty()) {
@@ -33,14 +46,17 @@ void IntervalList::merge_exact(const IntervalList& other) {
   }
   int last_index = 0;
 
+  // intervals of other list
   const std::vector<unsigned>& o_lower = other.get_lower();
   const std::vector<unsigned>& o_upper = other.get_upper();
+
+  // is this interval list is empty, just copy other list
   if (empty()) {
     std::copy(o_lower.begin(), o_lower.end(), std::back_inserter(lower_));
     std::copy(o_upper.begin(), o_upper.end(), std::back_inserter(upper_));
     return;
   } else {
-    // find relevant position in interval list
+    // for each interval in other list, find relevant position to insert
     unsigned a, b;
     int idxa, idxb;
     bool insa, insb;
@@ -111,6 +127,10 @@ void IntervalList::merge_exact(const IntervalList& other) {
   }
 }
 //-------------------------------------------------------------------------------------------------
+//! Merge two interval lists
+/*!
+ * \param other interval list
+ */
 void IntervalList::merge(const IntervalList& other) {
   // find starting point
   if (other.empty()) {
@@ -118,17 +138,20 @@ void IntervalList::merge(const IntervalList& other) {
   }
   int last_index = 0;
 
+  // other interval list
   const std::vector<unsigned>& o_lower = other.get_lower();
   const std::vector<unsigned>& o_upper = other.get_upper();
   const std::vector<char>& o_exact = other.get_exact();
   //assert((o_lower.size() == o_upper.size()) && (o_lower.size() == o_exact.size()));
+
+  // if this list is empty, just copy other list
   if (empty()) {
     std::copy(o_lower.begin(), o_lower.end(), std::back_inserter(lower_));
     std::copy(o_upper.begin(), o_upper.end(), std::back_inserter(upper_));
     std::copy(o_exact.begin(), o_exact.end(), std::back_inserter(exact_));
     return;
   } else {
-    // find relevant position in interval list
+    // for each interval in other list, find relevant position to insert
     unsigned a, b;
     char ex;
     int idxa, idxb;
@@ -252,6 +275,12 @@ void IntervalList::merge(const IntervalList& other) {
   }
 }
 //-------------------------------------------------------------------------------------------------
+//! Add interval to interval list
+/*!
+ * \param a left endpoint of new interval
+ * \param b right endpoint of new interval
+ * \param ex exactness indicator of new interval (0 approximate, 1 exact)
+ */
 void IntervalList::add(unsigned a, unsigned b, char ex) {
   //assert(empty());
   lower_.push_back(a);
@@ -259,6 +288,12 @@ void IntervalList::add(unsigned a, unsigned b, char ex) {
   exact_.push_back(ex);
 }
 //-------------------------------------------------------------------------------------------------
+//! Find id in interval list
+/*!
+ * \param x identifier
+ * \param min id to of leftmost interval to start with
+ * \return identifier of interval containing id or -1 if not contained
+ */
 int IntervalList::find(const unsigned& x, int min) const {
   if (empty() || x < lower_.front()) {
     return -1;
@@ -288,6 +323,11 @@ int IntervalList::find(const unsigned& x, int min) const {
   return -1;
 }
 //-------------------------------------------------------------------------------------------------
+//! Check whether interval list contains id.
+/*!
+ * \param x identifier
+ * \return type of containment (outside intervals or within exact/approximate interval
+ */
 IntervalList::containment IntervalList::contains(const unsigned& x) const {
   if (x < lower_.front() || x > upper_.back()) {
     return IntervalList::NOT;
@@ -318,6 +358,10 @@ IntervalList::containment IntervalList::contains(const unsigned& x) const {
   return IntervalList::NOT; // never reached
 }
 //-------------------------------------------------------------------------------------------------
+//! Restrict interval set to at most k intervals
+/*!
+ * \param k maximum number of intervals in result
+ */
 void IntervalList::restrict(const unsigned& k) {
   // already done?
   if (lower_.size() <= k)
@@ -367,7 +411,6 @@ void IntervalList::restrict(const unsigned& k) {
     // select this gap for preservation
     ++selected_gaps;
     selected[id] = 1;
-
 
     /* since gap has been selected, value of adjacent gaps has to be updated */
     /* Schema of indices of intervals and gaps:
@@ -425,6 +468,7 @@ void IntervalList::restrict(const unsigned& k) {
   assert(lower_.size() == exact_.size());
 }
 //-------------------------------------------------------------------------------------------------
+//! Print string representation of interval list
 std::ostream& operator<<(std::ostream& out, const IntervalList &il) {
   out << "{";
   for (unsigned i = 0; i < il.size(); ++i) {
